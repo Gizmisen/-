@@ -1,13 +1,66 @@
-# GitHub Codespaces ♥️ Flask
+# YouTube Viewer - Flask приложение
 
-Welcome to your shiny new Codespace running Flask! We've got everything fired up and running for you to explore Flask.
+Удобное веб-приложение для поиска и просмотра видео с YouTube через официальный API.
 
-You've got a blank canvas to work on from a git perspective as well. There's a single initial commit with the what you're seeing right now - where you go from here is up to you!
+## 🚀 Быстрый старт
 
-Everything you do here is contained within this one codespace. There is no repository on GitHub yet. If and when you’re ready you can click "Publish Branch" and we’ll create your repository and push up your project. If you were just exploring then and have no further need for this code then you can simply delete your codespace and it's gone forever.
+### 1. Получите YouTube API ключ
+Следуйте инструкциям в файле [API_KEY_SETUP.md](API_KEY_SETUP.md)
 
-To run this application:
+### 2. Запустите приложение
+
+```bash
+# Простой способ
+./run.sh
+
+# Или вручную
+export YOUTUBE_API_KEY="ваш_api_ключ"
+python app.py
+```
+
+Откройте http://localhost:5000 в браузере
+
+## ✨ Возможности
+
+- 🔍 Поиск видео на YouTube
+- ▶️ Встроенный плеер для просмотра
+- 📊 Статистика: просмотры, лайки, комментарии
+- 📱 Адаптивный дизайн
+
+## 📁 Структура проекта
 
 ```
-flask --debug run
+.
+├── app.py              # Основное Flask-приложение
+├── config.py           # Конфигурация
+├── requirements.txt    # Зависимости
+├── run.sh             # Скрипт запуска
+├── static/
+│   └── style.css      # Стили
+└── templates/         # HTML шаблоны
+    ├── base.html
+    ├── index.html
+    ├── results.html
+    ├── video.html
+    └── error.html
 ```
+
+## 📖 Документация
+
+- [API_KEY_SETUP.md](API_KEY_SETUP.md) - Настройка YouTube API
+- [README_YOUTUBE.md](README_YOUTUBE.md) - Подробная документация
+
+## ⚠️ Важно
+
+- Требуется YouTube API ключ
+- Лимит: ~10,000 запросов в день (бесплатно)
+- Только для легального использования
+- Не скачивайте видео
+
+## 🔧 Технологии
+
+- Flask 3.0.0
+- YouTube Data API v3
+- Bootstrap 5.3
+- Font Awesome 6.4
+
