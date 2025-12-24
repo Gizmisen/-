@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - YouTube Viewer{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-4 mb-4">
+            <i class="fab fa-youtube text-danger"></i> YouTube Viewer
+        </h1>
+        <p class="lead mb-5">Удобный просмотр видео с YouTube</p>
+        
+        <form action="/search" method="get" class="mb-5">
+            <div class="input-group input-group-lg">
+                <input type="search" class="form-control" name="q" 
+                       placeholder="Введите поисковый запрос..." required>
+                <button class="btn btn-danger" type="submit">
+                    <i class="fas fa-search me-2"></i>Найти
+                </button>
+            </div>
+        </form>
+        
+        {% if error %}
+            <div class="alert alert-warning">{{ error }}</div>
+        {% endif %}
+        
+        <div class="row mt-5">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-search fa-3x text-primary mb-3"></i>
+                        <h5>Поиск видео</h5>
+                        <p>Ищите любые видео на YouTube</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-play-circle fa-3x text-success mb-3"></i>
+                        <h5>Просмотр</h5>
+                        <p>Смотрите видео в удобном плеере</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-info-circle fa-3x text-info mb-3"></i>
+                        <h5>Детали</h5>
+                        <p>Полная информация о каждом видео</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

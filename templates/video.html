@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}{{ video.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- YouTube Player with Fallback for Geo-blocked regions -->
+        <div class="ratio ratio-16x9 mb-4" id="player-container">
+            <div id="youtube-player"></div>
+        </div>
+
+        <script>
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+            var player;
+            var fallbackUrl = '{{ video.fallback_url }}';
+            
+            function onYouTubeIframeAPIReady() {
+                player = new YT.Player('youtube-player', {
+                    videoId: '{{ video.id }}',
+                    width: '100%',
+                    height: '100%',
+                    playerVars: {
+                        'autoplay': 0,
+                        'controls': 1,
+                        'modestbranding': 1,
+                        'rel': 0,
+                        'fs': 1,
+                        'iv_load_policy': 3,
+                        'cc_load_policy': 1,
+                        'playsinline': 1
+                    },
+                    events: {
+                        'onError': onPlayerError
+                    }
+                });
+            }
+
+            function onPlayerError(event) {
+                console.error('YouTube плеер ошибка:', event.data);
+                var errorCode = event.data;
+                
+                // Ошибки блокировки региона/авторизации
+                if (errorCode === 150 || errorCode === 101 || errorCode === 100) {
+                    console.log('Видео недоступно, пытаемся альтернативный способ...');
+                    
+                    // Если есть fallback URL, используем прямое воспроизведение
+                    if (fallbackUrl && fallbackUrl !== 'None') {
+                        document.getElementById('youtube-player').innerHTML = `
+                            <div style="background: #000; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                                <video controls style="width: 100%; height: 100%;">
+                                    <source src="${fallbackUrl}" type="video/mp4">
+                                    Ваш браузер не поддерживает HTML5 видео
+                                </video>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // Если fallback не работает, показываем альтернативы
+                    document.getElementById('youtube-player').innerHTML = `
+                        <div class="alert alert-warning d-flex justify-content-between align-items-center h-100" style="display: flex; align-items: center; padding: 20px;">
+                            <div>
+                                <i class="fas fa-lock"></i> <strong>Видео заблокировано в вашем регионе</strong>
+                                <p style="margin-top: 10px; font-size: 14px;">
+                                    Это может быть связано с региональными ограничениями YouTube. 
+                                    <a href="https://www.youtube.com/watch?v={{ video.id }}" target="_blank" style="color: #0056b3;">
+                                        Попробуйте открыть на YouTube.com
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('youtube-player').innerHTML = `
+                        <div class="alert alert-danger d-flex justify-content-between align-items-center h-100" style="display: flex; align-items: center;">
+                            <div>
+                                <i class="fas fa-exclamation-circle"></i> Ошибка загрузки видео
+                            </div>
+                            <a href="https://www.youtube.com/watch?v={{ video.id }}" target="_blank" class="btn btn-danger ms-3">
+                                Смотрите на YouTube
+                            </a>
+                        </div>
+                    `;
+                }
+            }
+        </script>
+        
+        <!-- Информация о видео -->
+        <h2>{{ video.title }}</h2>
+        
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <span class="badge bg-secondary me-2">
+                    <i class="fas fa-eye"></i> {{ video.view_count }} просмотров
+                </span>
+                <span class="badge bg-success me-2">
+                    <i class="fas fa-thumbs-up"></i> {{ video.like_count }}
+                </span>
+                <span class="badge bg-info">
+                    <i class="fas fa-comment"></i> {{ video.comment_count }}
+                </span>
+            </div>
+            <div>
+                <a href="https://www.youtube.com/watch?v={{ video.id }}" 
+                   target="_blank" class="btn btn-danger btn-sm">
+                    <i class="fab fa-youtube"></i> На YouTube
+                </a>
+            </div>
+        </div>
+        
+        <!-- Описание видео -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> Описание
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ video.description|replace('\n', '<br>')|safe }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Дополнительная информация -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-list"></i> Информация
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span><i class="fas fa-user-circle"></i> Канал:</span>
+                        <strong>{{ video.channel_title }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span><i class="fas fa-calendar"></i> Опубликовано:</span>
+                        <strong>{{ video.published_at }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span><i class="fas fa-clock"></i> Длительность:</span>
+                        <strong>{{ video.duration }}</strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Похожие видео -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-search"></i> Новый поиск
+            </div>
+            <div class="card-body">
+                <form action="/search" method="get">
+                    <div class="input-group">
+                        <input type="search" class="form-control" name="q" 
+                               placeholder="Поиск видео..." required>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="/" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> На главную
+    </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Простая загрузка YouTube IFrame плеера
+    console.log('Video page loaded');
+</script>
+{% endblock %}

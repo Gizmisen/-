@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Результаты поиска: {{ query }}{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">
+    Результаты поиска: "<span class="text-primary">{{ query }}</span>"
+    <small class="text-muted">(найдено: {{ total_results }})</small>
+</h2>
+
+{% if videos %}
+    <div class="row">
+        {% for video in videos %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <a href="/video/{{ video.id }}">
+                    <img src="{{ video.thumbnail }}" 
+                         class="card-img-top" 
+                         alt="{{ video.title }}"
+                         style="height: 200px; object-fit: cover;">
+                </a>
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">
+                        <a href="/video/{{ video.id }}" class="text-decoration-none text-dark">
+                            {{ video.title[:60] }}{% if video.title|length > 60 %}...{% endif %}
+                        </a>
+                    </h5>
+                    <p class="card-text text-muted small">
+                        <i class="fas fa-user-circle"></i> {{ video.channel_title }}
+                    </p>
+                    <p class="card-text small">{{ video.description }}</p>
+                    <div class="mt-auto">
+                        <a href="/video/{{ video.id }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-play"></i> Смотреть
+                        </a>
+                        <a href="https://www.youtube.com/watch?v={{ video.id }}" 
+                           target="_blank" class="btn btn-outline-secondary btn-sm">
+                            <i class="fab fa-youtube"></i> На YouTube
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer text-muted small">
+                    Опубликовано: {{ video.published_at[:10] }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="mt-4 text-center">
+        <a href="/" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Новый поиск
+        </a>
+    </div>
+{% else %}
+    <div class="alert alert-warning text-center">
+        <h4><i class="fas fa-exclamation-triangle"></i> Ничего не найдено</h4>
+        <p>Попробуйте изменить поисковый запрос</p>
+        <a href="/" class="btn btn-primary">Вернуться на главную</a>
+    </div>
+{% endif %}
+{% endblock %}
