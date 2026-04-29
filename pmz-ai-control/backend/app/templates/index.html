@@ -68,6 +68,7 @@
 
   <section id="ai" class="panel">
     <div class="field"><label>Вопрос</label><textarea id="aiQuery" placeholder="Что не закрыто по заказу 102100118179?"></textarea></div>
+    <div class="field"><label><input type="checkbox" id="advanced" checked /> Использовать продвинутый AI (OpenAI + tools)</label></div>
     <div class="actions"><button onclick="askAi()">Спросить ИИ</button></div>
     <div id="aiStatus" class="status warn">Например: «Покажи план факт 2026-03».</div>
     <pre id="aiOut" class="result"></pre>
@@ -114,7 +115,7 @@ async function exportPlanFact(){
 }
 
 async function askAi(){
-  try{const r=await fetch('/ai/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:aiQuery.value})});
+  try{const r=await fetch('/ai/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:aiQuery.value, advanced: advanced.checked})});
     const j=await r.json();pretty('aiOut',j);if(!r.ok) throw new Error(j.detail||'Ошибка AI');setStatus('aiStatus',j.answer||'Ответ получен','ok');
   }catch(e){setStatus('aiStatus',e.message,'err');}
 }

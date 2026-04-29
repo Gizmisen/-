@@ -1,8 +1,16 @@
+import json
+import os
+from datetime import date
+
 from sqlalchemy.orm import Session
 
 from app.models.orders import Order
 from app.models.production_fact import ProductionFact
 from app.models.production_plan import ProductionPlan
+from app.services.plan_fact_service import build_plan_fact_report
+
+
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 
 
 def find_order(db: Session, order_number: str) -> dict | None:
@@ -14,6 +22,7 @@ def find_order(db: Session, order_number: str) -> dict | None:
         "status": order.status,
         "plant": order.plant,
         "quantity": float(order.quantity or 0),
+        "required_date": str(order.required_date) if order.required_date else None,
     }
 
 
@@ -23,39 +32,23 @@ def find_material_usage(db: Session, material_code: str) -> dict:
     return {"material_code": material_code, "plan_rows": plan_count, "fact_rows": fact_count}
 
 
-def analyze_plan_fact(db: Session, period: str | None = None) -> list[dict]:
-    query = db.query(ProductionPlan)
-    if period:
-        query = query.filter(ProductionPlan.plan_period == period)
-
-    issues = []
-    for p in query.all():
-        fact = (
-            db.query(ProductionFact)
-            .filter(
-                ProductionFact.order_number == p.order_number,
-                ProductionFact.material_code == p.material_code,
-                ProductionFact.department == p.department,
-            )
-            .first()
-        )
-        fact_qty = float(fact.fact_qty) if fact and fact.fact_qty else 0.0
-        plan_qty = float(p.planned_qty or 0)
-        if plan_qty > fact_qty:
-            issues.append(
-                {
-                    "order_number": p.order_number,
-                    "material_code": p.material_code,
-                    "department": p.department,
-                    "plan_qty": plan_qty,
-                    "fact_qty": fact_qty,
-                    "gap": plan_qty - fact_qty,
-                }
-            )
-    return issues
+def analyze_plan_fact(db: Session, period: str | None = None, status: str | None = None, limit: int = 50) -> list[dict]:
+    items = build_plan_fact_report(db, period=period)
+    if status:
+        items = [x for x in items if x.get("status") == status]
+    return items[:limit]
 
 
-def answer_query(db: Session, query: str) -> tuple[str, dict | list | None]:
+def get_overdue_items(db: Session, today: str | None = None) -> list[dict]:
+    today_date = date.fromisoformat(today) if today else date.today()
+    rows = []
+    for o in db.query(Order).all():
+        if o.required_date and o.required_date < today_date and (o.status or "") != "closed":
+            rows.append({"order_number": o.order_number, "required_date": str(o.required_date), "status": o.status})
+    return rows
+
+
+def _local_answer(db: Session, query: str) -> tuple[str, dict | list | None]:
     q = query.lower()
     if "заказ" in q:
         number = "".join(ch for ch in query if ch.isdigit())
@@ -71,16 +64,74 @@ def answer_query(db: Session, query: str) -> tuple[str, dict | list | None]:
         return f"Материал {token}: плановых строк {data['plan_rows']}, фактических строк {data['fact_rows']}.", data
 
     if "план" in q and "факт" in q:
-        period = None
-        for part in query.split():
-            if len(part) == 7 and part[4] == "-":
-                period = part
-                break
+        period = next((part for part in query.split() if len(part) == 7 and part[4] == "-"), None)
         issues = analyze_plan_fact(db, period=period)
-        return f"Найдено {len(issues)} позиций с недовыполнением.", issues[:50]
+        return f"Найдено {len(issues)} позиций в отчете план-факт.", issues
+
+    if "просроч" in q:
+        overdue = get_overdue_items(db)
+        return f"Просроченных заказов: {len(overdue)}", overdue
 
     return (
-        "Я умею: искать заказ, анализировать план-факт, проверять материал. "
-        "Пример: 'Что не закрыто по заказу 102100118179?'",
+        "Я умею: искать заказ, анализировать план-факт, просрочки и материал. "
+        "Пример: 'Покажи план-факт 2026-03 статус нет факта'",
         None,
     )
+
+
+def _tool_schema() -> list[dict]:
+    return [
+        {"type": "function", "function": {"name": "find_order", "description": "Find order by order number", "parameters": {"type": "object", "properties": {"order_number": {"type": "string"}}, "required": ["order_number"]}}},
+        {"type": "function", "function": {"name": "find_material_usage", "description": "Find material usage in plan/fact", "parameters": {"type": "object", "properties": {"material_code": {"type": "string"}}, "required": ["material_code"]}}},
+        {"type": "function", "function": {"name": "analyze_plan_fact", "description": "Analyze plan/fact report", "parameters": {"type": "object", "properties": {"period": {"type": "string"}, "status": {"type": "string"}, "limit": {"type": "integer"}}}}},
+        {"type": "function", "function": {"name": "get_overdue_items", "description": "Get overdue items", "parameters": {"type": "object", "properties": {"today": {"type": "string"}}}}},
+    ]
+
+
+def _execute_tool(db: Session, name: str, arguments: dict):
+    if name == "find_order":
+        return find_order(db, arguments["order_number"])
+    if name == "find_material_usage":
+        return find_material_usage(db, arguments["material_code"])
+    if name == "analyze_plan_fact":
+        return analyze_plan_fact(db, period=arguments.get("period"), status=arguments.get("status"), limit=arguments.get("limit", 50))
+    if name == "get_overdue_items":
+        return get_overdue_items(db, today=arguments.get("today"))
+    return {"error": f"Unknown tool {name}"}
+
+
+def answer_query(db: Session, query: str, advanced: bool = True) -> tuple[str, dict | list | None, str]:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not advanced or not api_key:
+        answer, data = _local_answer(db, query)
+        return answer, data, "local"
+
+    try:
+        from openai import OpenAI
+
+        client = OpenAI(api_key=api_key)
+        messages = [
+            {"role": "system", "content": "You are PMZ production assistant. Use tools when needed. Never invent DB facts."},
+            {"role": "user", "content": query},
+        ]
+
+        first = client.chat.completions.create(model=OPENAI_MODEL, messages=messages, tools=_tool_schema(), tool_choice="auto")
+        msg = first.choices[0].message
+
+        if msg.tool_calls:
+            tool_payload = []
+            for tc in msg.tool_calls:
+                args = json.loads(tc.function.arguments or "{}")
+                result = _execute_tool(db, tc.function.name, args)
+                tool_payload.append({"tool": tc.function.name, "result": result})
+                messages.append({"role": "assistant", "tool_calls": [tc.model_dump()]})
+                messages.append({"role": "tool", "tool_call_id": tc.id, "content": json.dumps(result, ensure_ascii=False)})
+
+            second = client.chat.completions.create(model=OPENAI_MODEL, messages=messages)
+            final = second.choices[0].message.content or "Готово"
+            return final, tool_payload, "openai"
+
+        return msg.content or "Готово", None, "openai"
+    except Exception:
+        answer, data = _local_answer(db, query)
+        return answer, data, "local_fallback"
