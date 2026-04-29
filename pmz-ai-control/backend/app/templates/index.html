@@ -60,7 +60,7 @@
 
   <section id="planfact" class="panel">
     <div class="grid"><div class="field"><label>Период</label><input id="period" placeholder="2026-03"/></div></div>
-    <div class="actions"><button onclick="planFact()">Построить отчет</button></div>
+    <div class="actions"><button onclick="planFact()">Построить отчет</button><button onclick="exportPlanFact()">Экспорт CSV</button></div>
     <div id="pfStatus" class="status warn">Введите период и нажмите кнопку.</div>
     <div id="pfTable"></div>
     <pre id="planFactOut" class="result"></pre>
@@ -107,6 +107,12 @@ function renderTable(items){
   const rows=items.slice(0,20).map(i=>`<tr><td>${i.order_number||''}</td><td>${i.material_code||''}</td><td>${i.department||''}</td><td>${(i.plan_qty??0).toFixed(2)}</td><td>${(i.fact_qty??0).toFixed(2)}</td><td>${(i.remaining_qty??0).toFixed(2)}</td><td>${(i.completion_percent??0).toFixed(1)}%</td><td>${i.status||''}</td></tr>`).join('');
   pfTable.innerHTML=`<table class="table"><thead><tr><th>Заказ</th><th>Материал</th><th>Участок</th><th>План</th><th>Факт</th><th>Остаток</th><th>%</th><th>Статус</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
+
+async function exportPlanFact(){
+  const p=period.value||'';
+  window.open(`/plan-fact/export?period=${encodeURIComponent(p)}`, '_blank');
+}
+
 async function askAi(){
   try{const r=await fetch('/ai/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:aiQuery.value})});
     const j=await r.json();pretty('aiOut',j);if(!r.ok) throw new Error(j.detail||'Ошибка AI');setStatus('aiStatus',j.answer||'Ответ получен','ok');

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models.imports import FileImport
+from app.services.audit_service import write_audit
 from app.services.excel_reader import CSV_SHEET, read_file_preview
 from app.services.import_service import import_fact, import_plan, save_raw_rows
 
@@ -37,6 +38,7 @@ async def upload_file(module: str = Form(...), file: UploadFile = File(...), db:
     db.refresh(rec)
 
     total = save_raw_rows(db, rec)
+    write_audit(db, action="upload_file", entity_type="file_import", entity_id=str(rec.id), new_value={"module": module, "rows_total": total})
     return {"file_id": rec.id, "rows_total": total}
 
 
@@ -63,4 +65,5 @@ def confirm_import(file_id: int, sheet_name: str = Form(default=CSV_SHEET), db: 
             raise HTTPException(status_code=400, detail="Unsupported module for confirm")
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    write_audit(db, action="confirm_import", entity_type="file_import", entity_id=str(rec.id), new_value={"rows": rows, "status": rec.status})
     return {"imported_rows": rows, "status": rec.status}
