@@ -1,87 +1,30 @@
 # PMZ AI Control
 
-Рабочий MVP backend на FastAPI + PostgreSQL для:
-- регистрации/логина;
-- загрузки Excel;
-- сохранения сырых строк импорта;
-- импорта `plan` и `fact`;
-- отчёта план-факт.
+MVP backend на FastAPI + PostgreSQL.
 
-## Запуск
-
+## Безопасный старт
+1. Скопируйте пример окружения:
 ```bash
-cd pmz-ai-control
+cp .env.example .env
+```
+2. Заполните `JWT_SECRET_KEY`.
+3. Для production обязательно укажите явный `ALLOWED_ORIGINS` и сильный `JWT_SECRET_KEY`.
+
+## Запуск (dev)
+```bash
 docker compose up --build
 ```
+- API: `http://localhost:8000/docs`
+- UI: `http://localhost:8000/`
 
-Проверка:
-- `GET http://localhost:8000/health`
-- Swagger: `http://localhost:8000/docs`
-- MVP интерфейс: `http://localhost:8000/`
-
-## Основные API
-
-1. `POST /auth/register`
-2. `POST /auth/login`
-3. `POST /imports/upload` (form-data: `module=plan|fact`, `file=<excel>`)
-4. `GET /imports/{file_id}/preview`
-5. `POST /imports/{file_id}/confirm` (form-data: `sheet_name=...`)
-6. `GET /plan-fact?period=2026-03`
-7. `POST /ai/query` (json: `{ "query": "Что не закрыто по заказу 102100118179?" }`)
-
-## Формат Excel для MVP
-
-### module=plan
-Колонки:
-- `plan_period`, `plan_version`, `order_number`, `material_code`, `material_name`,
-- `plant`, `department`, `work_center`, `planned_qty`, `planned_hours`, `planned_weight`.
-
-### module=fact
-Колонки:
-- `fact_period`, `order_number`, `customer_order`, `material_code`, `material_name`,
-- `plant`, `department`, `work_center`, `order_qty`, `delivered_qty`, `confirmed_qty`, `fact_qty`, `fact_hours`.
-
-
-## Запуск как EXE (Windows)
-
-1. Откройте `cmd` в папке `pmz-ai-control`.
-2. Выполните:
-
-```bat
-build_exe.bat
-```
-
-3. После сборки появится `dist\pmz-ai-control.exe`.
-4. Запустите EXE и откройте `http://localhost:8000`.
-
-## Быстрый локальный запуск (Linux/macOS)
-
+## Запуск (prod image)
 ```bash
-./run_local.sh
+docker build -f backend/Dockerfile -t pmz-ai-control:prod ./backend
 ```
 
-## Запуск в 2 клика (Windows)
+## Импорт файлов
+Поддерживаются как “системные” колонки, так и базовый маппинг русских колонок (например: `Номер материала`, `Краткий текст материала`, `Заказ`, `Общее время`, `ПоставлКоличество`).
 
-- Двойной клик по `start_pmz.bat`:
-  - если EXE уже собран — сразу запускается приложение и открывается браузер;
-  - если EXE не собран — сначала автоматически выполняется сборка, потом запуск.
-
-Для режима разработки (без EXE): двойной клик по `start_pmz_dev.bat`.
-
-
-## Работа с разных компьютеров (единая база и единый сервер)
-
-Чтобы все ПК работали "как одна система", нужно запускать **один центральный backend+DB** на сервере,
-а пользователи открывают один и тот же URL (например `http://SERVER_IP:8000`).
-
-Минимальные шаги:
-1. Разверните проект на одном сервере (VPS/локальный сервер в сети).
-2. В `.env` задайте:
-   - `DATABASE_URL` на центральную PostgreSQL
-   - `ALLOWED_ORIGINS` (например `http://10.0.0.5:3000,http://10.0.0.6:3000` или `*`)
-   - `INSTANCE_NAME=pmz-main`
-3. Откройте порт `8000` на сервере и дайте пользователям ссылку `http://SERVER_IP:8000`.
-
-Проверка синхронизации:
-- `GET /health` возвращает имя инстанса (`instance`) — все клиенты должны видеть один и тот же инстанс.
-- Любой импорт, сделанный на одном ПК, сразу виден на остальных, потому что данные в одной БД.
+## Работа с разных ПК
+Запускайте один центральный backend + PostgreSQL на сервере, а пользователи открывают один URL.
+Проверка: `GET /health` должен показывать одинаковый `instance` у всех клиентов.
