@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PMZ AI Control</title>
+  <style>
+    :root{--bg:#0b1020;--panel:#121a31;--panel2:#1a2545;--txt:#e8ecff;--muted:#9aa8d6;--accent:#6ea8fe;--ok:#37d67a;--warn:#ffca3a;--err:#ff5d73;--radius:16px}
+    *{box-sizing:border-box} body{margin:0;background:radial-gradient(1200px 600px at 20% -20%,#1f2f5c 0,#0b1020 55%);color:var(--txt);font-family:Inter,Segoe UI,Arial,sans-serif}
+    .layout{max-width:1200px;margin:0 auto;padding:24px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+    .title h1{margin:0;font-size:30px}.title p{margin:6px 0 0;color:var(--muted)}
+    .badge{padding:8px 12px;border-radius:999px;background:#1e2d57;color:#b9c8ff;font-size:13px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .tab{border:1px solid #2b3b6f;background:#162243;color:#dbe4ff;padding:10px 14px;border-radius:10px;cursor:pointer}
+    .tab.active{background:linear-gradient(180deg,#2e4b91,#243a71);border-color:#5d83e8}
+    .panel{display:none;background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid #273863;border-radius:var(--radius);padding:18px}
+    .panel.active{display:block}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    label{font-size:13px;color:#b8c5ef}
+    input,select,textarea,button{border-radius:10px;border:1px solid #35508d;background:#0e1730;color:#eaf0ff;padding:10px}
+    textarea{min-height:110px} button{background:linear-gradient(180deg,#4472e6,#3457b2);cursor:pointer;font-weight:600}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.actions button{flex:1}
+    .status{margin-top:10px;padding:10px;border-radius:10px;background:#0f1d3d;color:#c9d8ff;font-size:14px}
+    .ok{border-left:4px solid var(--ok)} .warn{border-left:4px solid var(--warn)} .err{border-left:4px solid var(--err)}
+    .result{margin-top:12px;background:#080d1c;border:1px solid #23345f;border-radius:12px;padding:12px;max-height:420px;overflow:auto;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+    .table{width:100%;border-collapse:collapse;margin-top:10px}.table th,.table td{border-bottom:1px solid #263863;padding:8px;text-align:left}.table th{color:#9fb2ea;font-weight:600}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <div class="top">
+    <div class="title"><h1>PMZ AI Control</h1><p>Интуитивный интерфейс: импорт, план‑факт, AI-анализ.</p></div>
+    <div class="badge">MVP UI v2</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="import">Импорт данных</button>
+    <button class="tab" data-tab="planfact">План‑факт</button>
+    <button class="tab" data-tab="ai">ИИ-помощник</button>
+  </div>
+
+  <section id="import" class="panel active">
+    <div class="grid">
+      <div class="field"><label>Модуль</label><select id="module"><option value="plan">План</option><option value="fact">Факт</option></select></div>
+      <div class="field"><label>Excel/CSV файл</label><input id="file" type="file"/></div>
+      <div class="field"><label>ID файла</label><input id="fileId" placeholder="Появится после загрузки"/></div>
+      <div class="field"><label>Лист (для CSV можно оставить)</label><input id="sheet" value="csv"/></div>
+    </div>
+    <div class="actions">
+      <button onclick="upload()">1) Загрузить</button>
+      <button onclick="preview()">2) Предпросмотр</button>
+      <button onclick="confirmImport()">3) Подтвердить импорт</button>
+    </div>
+    <div id="importStatus" class="status warn">Ожидание действий.</div>
+    <pre id="importOut" class="result"></pre>
+  </section>
+
+  <section id="planfact" class="panel">
+    <div class="grid"><div class="field"><label>Период</label><input id="period" placeholder="2026-03"/></div></div>
+    <div class="actions"><button onclick="planFact()">Построить отчет</button></div>
+    <div id="pfStatus" class="status warn">Введите период и нажмите кнопку.</div>
+    <div id="pfTable"></div>
+    <pre id="planFactOut" class="result"></pre>
+  </section>
+
+  <section id="ai" class="panel">
+    <div class="field"><label>Вопрос</label><textarea id="aiQuery" placeholder="Что не закрыто по заказу 102100118179?"></textarea></div>
+    <div class="actions"><button onclick="askAi()">Спросить ИИ</button></div>
+    <div id="aiStatus" class="status warn">Например: «Покажи план факт 2026-03».</div>
+    <pre id="aiOut" class="result"></pre>
+  </section>
+</div>
+
+<script>
+const tabs=[...document.querySelectorAll('.tab')];
+tabs.forEach(t=>t.onclick=()=>{tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById(t.dataset.tab).classList.add('active');});
+const setStatus=(id,msg,kind='warn')=>{const el=document.getElementById(id);el.className='status '+kind;el.textContent=msg;};
+const pretty=(id,data)=>document.getElementById(id).textContent=JSON.stringify(data,null,2);
+
+async function upload(){
+  try{const fd=new FormData();fd.append('module',module.value);fd.append('file',file.files[0]);
+    const r=await fetch('/imports/upload',{method:'POST',body:fd});const j=await r.json();pretty('importOut',j);
+    if(!r.ok) throw new Error(j.detail||'Ошибка загрузки'); if(j.file_id) fileId.value=j.file_id;
+    setStatus('importStatus',`Файл загружен. ID: ${j.file_id}, строк: ${j.rows_total}`,'ok');
+  }catch(e){setStatus('importStatus',e.message,'err');}
+}
+async function preview(){
+  try{const r=await fetch(`/imports/${fileId.value}/preview`);const j=await r.json();pretty('importOut',j);
+    if(!r.ok) throw new Error(j.detail||'Ошибка предпросмотра');setStatus('importStatus','Предпросмотр получен. Проверьте колонки.','ok');
+  }catch(e){setStatus('importStatus',e.message,'err');}
+}
+async function confirmImport(){
+  try{const fd=new FormData();fd.append('sheet_name',sheet.value||'csv');
+    const r=await fetch(`/imports/${fileId.value}/confirm`,{method:'POST',body:fd});const j=await r.json();pretty('importOut',j);
+    if(!r.ok) throw new Error(j.detail||'Ошибка подтверждения');setStatus('importStatus',`Импорт завершен. Строк: ${j.imported_rows}`,'ok');
+  }catch(e){setStatus('importStatus',e.message,'err');}
+}
+async function planFact(){
+  try{const r=await fetch(`/plan-fact?period=${encodeURIComponent(period.value)}`);const j=await r.json();pretty('planFactOut',j);
+    if(!r.ok) throw new Error(j.detail||'Ошибка отчета');setStatus('pfStatus',`Получено строк: ${(j.items||[]).length}`,'ok');renderTable(j.items||[]);
+  }catch(e){setStatus('pfStatus',e.message,'err');}
+}
+function renderTable(items){
+  const rows=items.slice(0,20).map(i=>`<tr><td>${i.order_number||''}</td><td>${i.material_code||''}</td><td>${i.department||''}</td><td>${(i.plan_qty??0).toFixed(2)}</td><td>${(i.fact_qty??0).toFixed(2)}</td><td>${(i.remaining_qty??0).toFixed(2)}</td><td>${(i.completion_percent??0).toFixed(1)}%</td><td>${i.status||''}</td></tr>`).join('');
+  pfTable.innerHTML=`<table class="table"><thead><tr><th>Заказ</th><th>Материал</th><th>Участок</th><th>План</th><th>Факт</th><th>Остаток</th><th>%</th><th>Статус</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+async function askAi(){
+  try{const r=await fetch('/ai/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:aiQuery.value})});
+    const j=await r.json();pretty('aiOut',j);if(!r.ok) throw new Error(j.detail||'Ошибка AI');setStatus('aiStatus',j.answer||'Ответ получен','ok');
+  }catch(e){setStatus('aiStatus',e.message,'err');}
+}
+</script>
+</body>
+</html>
