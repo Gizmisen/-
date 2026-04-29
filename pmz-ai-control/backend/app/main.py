@@ -11,7 +11,8 @@ from app.routers import ai, auth, imports as imports_router, plan_fact, ui
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    if settings.app_env.lower() in {"dev", "local", "test"}:
+        Base.metadata.create_all(bind=engine)
     yield
 
 

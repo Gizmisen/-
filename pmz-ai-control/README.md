@@ -28,3 +28,7 @@ docker build -f backend/Dockerfile -t pmz-ai-control:prod ./backend
 ## Работа с разных ПК
 Запускайте один центральный backend + PostgreSQL на сервере, а пользователи открывают один URL.
 Проверка: `GET /health` должен показывать одинаковый `instance` у всех клиентов.
+
+
+## Примечание по схемe БД
+В dev-режиме таблицы создаются автоматически (`create_all`). Для production используйте SQL миграции (`backend/app/migrations/001_init_schema.sql` и далее Alembic).
