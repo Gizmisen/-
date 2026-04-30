@@ -1,0 +1,2 @@
+plan_period,plan_version,order_number,material_code,material_name,plant,department,work_center,planned_qty,planned_hours,planned_weight
+2026-03,BP,102100118179,100001,Труба 1420,1420,УМК,WC-01,100,12,3500
