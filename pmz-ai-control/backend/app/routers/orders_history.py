@@ -50,3 +50,15 @@ def analogs(material_code: str | None = Query(default=None), plant: str | None =
 @router.get("/compare-with-portfolio")
 def compare_portfolio(limit: int = Query(default=200, ge=1, le=2000), db: Session = Depends(get_db)):
     return {"items": compare_with_portfolio(db, limit=limit)}
+
+
+@router.get("/by-order/{order_number}")
+def by_order(order_number: str, db: Session = Depends(get_db)):
+    items = list_rows(db, order_number=order_number, limit=1000)
+    return {"items": [{"id": x.id, "order_number": x.order_number, "status": x.status, "comment": x.comment} for x in items]}
+
+
+@router.get("/by-material/{material_code}")
+def by_material(material_code: str, db: Session = Depends(get_db)):
+    items = find_analogs(db, material_code=material_code, limit=1000)
+    return {"items": items}

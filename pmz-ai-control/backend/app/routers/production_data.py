@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.imports import FileImport
 from app.services.production_data_import_service import import_master_data
+from app.services.production_data_validation_service import material_duplicates_by_plant, material_routings, materials_without_routings
 from app.services.production_data_service import (
     create_material,
     create_routing,
@@ -94,3 +95,27 @@ def import_master(file_id: int, db: Session = Depends(get_db)):
         return {"error": "file not found"}
     result = import_master_data(db, rec)
     return {"status": rec.status, "imported": result}
+
+
+@router.get("/materials/{material_code}")
+def material_by_code(material_code: str, db: Session = Depends(get_db)):
+    items = list_materials(db, limit=1000)
+    for x in items:
+        if x.material_code == material_code:
+            return {"id": x.id, "material_code": x.material_code, "material_name": x.material_name, "unit": x.unit, "plant": x.plant}
+    return {"error": "not found"}
+
+
+@router.get("/materials/{material_code}/routings")
+def material_routing_list(material_code: str, db: Session = Depends(get_db)):
+    return {"items": material_routings(db, material_code)}
+
+
+@router.get("/check-duplicates")
+def check_duplicates(db: Session = Depends(get_db)):
+    return {"items": material_duplicates_by_plant(db)}
+
+
+@router.get("/missing-routings")
+def missing_routings(db: Session = Depends(get_db)):
+    return {"items": materials_without_routings(db)}
