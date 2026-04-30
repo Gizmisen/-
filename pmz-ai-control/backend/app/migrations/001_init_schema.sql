@@ -237,3 +237,70 @@ CREATE TABLE ai_embeddings (
     embedding VECTOR(1536),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE order_portfolio (
+    id BIGSERIAL PRIMARY KEY,
+    period VARCHAR(7) NOT NULL,
+    order_number VARCHAR(64) NOT NULL,
+    material_code VARCHAR(64),
+    material_name TEXT,
+    plant VARCHAR(32),
+    qty NUMERIC(18,6),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE orders_history (
+    id BIGSERIAL PRIMARY KEY,
+    order_number VARCHAR(64) NOT NULL,
+    status VARCHAR(64),
+    event_date DATE,
+    comment TEXT
+);
+
+CREATE TABLE plan_versions (
+    id BIGSERIAL PRIMARY KEY,
+    period VARCHAR(7) NOT NULL,
+    version_code VARCHAR(32) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE plan_version_rows (
+    id BIGSERIAL PRIMARY KEY,
+    plan_version_id BIGINT NOT NULL REFERENCES plan_versions(id) ON DELETE CASCADE,
+    order_number VARCHAR(64) NOT NULL,
+    material_code VARCHAR(64),
+    work_center VARCHAR(64),
+    planned_qty NUMERIC(18,6),
+    planned_hours NUMERIC(18,6)
+);
+
+CREATE TABLE warehouse_stock (
+    id BIGSERIAL PRIMARY KEY,
+    material_code VARCHAR(64) NOT NULL,
+    plant VARCHAR(32),
+    qty NUMERIC(18,6),
+    snapshot_date DATE
+);
+
+CREATE TABLE sap_orders (
+    id BIGSERIAL PRIMARY KEY,
+    sap_order VARCHAR(64) NOT NULL,
+    order_number VARCHAR(64),
+    status VARCHAR(64)
+);
+
+CREATE TABLE sap_dates (
+    id BIGSERIAL PRIMARY KEY,
+    sap_order VARCHAR(64) NOT NULL,
+    date_type VARCHAR(32) NOT NULL,
+    value_date DATE
+);
+
+CREATE TABLE labor_fact (
+    id BIGSERIAL PRIMARY KEY,
+    period VARCHAR(7) NOT NULL,
+    order_number VARCHAR(64) NOT NULL,
+    work_center VARCHAR(64),
+    labor_hours NUMERIC(18,6)
+);

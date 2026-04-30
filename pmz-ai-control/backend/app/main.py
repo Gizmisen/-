@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import Base, engine
-from app.models import imports, materials, orders, production_fact, production_plan, users
+from app.models import extended_contour, imports, materials, orders, production_fact, production_plan, users
 from app.routers import ai, auth, dashboard, fact, imports as imports_router, labor_fact, orders_history, plan_fact, plan_versions, planning, portfolio, production_data, sales, sap, templates, ui, warehouse
 
 
