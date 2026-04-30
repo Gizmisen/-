@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models.imports import FileImport
+from app.services.orders_history_import_service import import_orders_history
 from app.services.orders_history_service import create_row, list_rows
 
 router = APIRouter(prefix="/orders-history", tags=["orders-history"])
@@ -29,3 +31,11 @@ def rows(order_number: str | None = Query(default=None), limit: int = Query(defa
 def add_row(payload: HistoryCreate, db: Session = Depends(get_db)):
     x = create_row(db, order_number=payload.order_number, status=payload.status, comment=payload.comment)
     return {"id": x.id}
+
+
+@router.post("/import/{file_id}")
+def import_history(file_id: int, db: Session = Depends(get_db)):
+    rec = db.query(FileImport).filter(FileImport.id == file_id).first()
+    if not rec:
+        return {"error": "file not found"}
+    return import_orders_history(db, rec)
