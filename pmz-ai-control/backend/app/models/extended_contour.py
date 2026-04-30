@@ -77,3 +77,23 @@ class LaborFact(Base):
     order_number: Mapped[str] = mapped_column(String(64), nullable=False)
     work_center: Mapped[str | None] = mapped_column(String(64))
     labor_hours: Mapped[float | None] = mapped_column(Numeric(18, 6))
+
+
+class BomSpec(Base):
+    __tablename__ = "bom_specs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    parent_material_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    plant: Mapped[str | None] = mapped_column(String(32))
+    component_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    component_qty: Mapped[float | None] = mapped_column(Numeric(18, 6))
+    component_unit: Mapped[str | None] = mapped_column(String(32))
+
+
+class RoutingOperation(Base):
+    __tablename__ = "routing_operations"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    material_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    plant: Mapped[str | None] = mapped_column(String(32))
+    work_center: Mapped[str] = mapped_column(String(64), nullable=False)
+    labor_value: Mapped[float | None] = mapped_column(Numeric(18, 6))
+    labor_unit: Mapped[str | None] = mapped_column(String(16))

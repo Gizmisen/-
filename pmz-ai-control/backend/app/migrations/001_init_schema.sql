@@ -304,3 +304,21 @@ CREATE TABLE labor_fact (
     work_center VARCHAR(64),
     labor_hours NUMERIC(18,6)
 );
+
+CREATE TABLE bom_specs (
+    id BIGSERIAL PRIMARY KEY,
+    parent_material_code VARCHAR(64) NOT NULL,
+    plant VARCHAR(32),
+    component_code VARCHAR(64) NOT NULL,
+    component_qty NUMERIC(18,6),
+    component_unit VARCHAR(32)
+);
+
+CREATE TABLE routing_operations (
+    id BIGSERIAL PRIMARY KEY,
+    material_code VARCHAR(64) NOT NULL,
+    plant VARCHAR(32),
+    work_center VARCHAR(64) NOT NULL,
+    labor_value NUMERIC(18,6),
+    labor_unit VARCHAR(16)
+);

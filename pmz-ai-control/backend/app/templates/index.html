@@ -39,6 +39,7 @@
   <div class="tabs">
     <button class="tab active" data-tab="import">Импорт данных</button>
     <button class="tab" data-tab="planfact">План‑факт</button>
+    <button class="tab" data-tab="portfolio">Портфель заказов</button>
     <button class="tab" data-tab="ai">ИИ-помощник</button>
   </div>
 
@@ -66,6 +67,20 @@
     <div id="pfStatus" class="status warn">Введите период и нажмите кнопку.</div>
     <div id="pfTable"></div>
     <pre id="planFactOut" class="result"></pre>
+  </section>
+
+
+  <section id="portfolio" class="panel">
+    <div class="grid">
+      <div class="field"><label>Период</label><input id="pfPeriod" placeholder="2026-04"/></div>
+      <div class="field"><label>Заказ</label><input id="pfOrder"/></div>
+      <div class="field"><label>Материал</label><input id="pfMaterial"/></div>
+      <div class="field"><label>Завод</label><input id="pfPlant" placeholder="1420"/></div>
+      <div class="field"><label>Количество</label><input id="pfQty" type="number" step="0.01" value="0"/></div>
+    </div>
+    <div class="actions"><button onclick="addPortfolio()">Добавить в портфель</button><button onclick="loadPortfolio()">Показать портфель</button></div>
+    <div id="portfolioStatus" class="status warn">Форма добавления позиции портфеля.</div>
+    <pre id="portfolioOut" class="result"></pre>
   </section>
 
   <section id="ai" class="panel">
@@ -114,6 +129,19 @@ function renderTable(items){
 async function exportPlanFact(){
   const p=period.value||'';
   window.open(`/plan-fact/export?period=${encodeURIComponent(p)}`, '_blank');
+}
+
+
+async function addPortfolio(){
+  try{const body={period:pfPeriod.value,order_number:pfOrder.value,material_code:pfMaterial.value||null,plant:pfPlant.value||null,qty:Number(pfQty.value||0)};
+    const r=await fetch('/portfolio/rows',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json();pretty('portfolioOut',j);
+    if(!r.ok) throw new Error(j.detail||'Ошибка добавления');setStatus('portfolioStatus',`Позиция добавлена, id=${j.id}`,'ok');
+  }catch(e){setStatus('portfolioStatus',e.message,'err');}
+}
+async function loadPortfolio(){
+  try{const r=await fetch('/portfolio/rows?limit=50');const j=await r.json();pretty('portfolioOut',j);
+    if(!r.ok) throw new Error(j.detail||'Ошибка загрузки');setStatus('portfolioStatus',`Строк в ответе: ${j.length}`,'ok');
+  }catch(e){setStatus('portfolioStatus',e.message,'err');}
 }
 
 async function askAi(){
