@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models.imports import FileImport
 from app.schemas.ai import AIQueryRequest, AIQueryResponse
 from app.services.ai_service import answer_query, build_document_by_query, get_ai_capabilities
+from app.services.ai_excel_service import analyze_excel_file
 from app.services.audit_service import write_audit
 from app.services.import_service import import_fact, import_plan, save_raw_rows
 from app.services.orders_history_import_service import import_orders_history
@@ -81,3 +82,16 @@ async def ai_ingest_file(
 
     write_audit(db, action="ai_ingest_file", entity_type="file_import", entity_id=str(rec.id), new_value={"target": target, "rows": rows})
     return {"status": "ok", "file_id": rec.id, "target": target, "rows": rows}
+
+
+@router.post("/excel-analyze")
+async def ai_excel_analyze(file: UploadFile = File(...)):
+    uploads_dir = Path(settings.upload_dir)
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+    ext = Path(file.filename).suffix.lower()
+    if ext not in {".xlsx", ".xlsm", ".xls", ".csv"}:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+    stored_name = f"{uuid4()}{ext}"
+    destination = uploads_dir / stored_name
+    destination.write_bytes(await file.read())
+    return analyze_excel_file(destination)
