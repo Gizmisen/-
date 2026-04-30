@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.orders import Order
 from app.models.production_fact import ProductionFact
 from app.models.production_plan import ProductionPlan
+from app.services.dashboard_service import build_dashboard
 from app.services.plan_fact_service import build_plan_fact_report
 
 
@@ -71,6 +72,16 @@ def _local_answer(db: Session, query: str) -> tuple[str, dict | list | None]:
     if "просроч" in q:
         overdue = get_overdue_items(db)
         return f"Просроченных заказов: {len(overdue)}", overdue
+
+
+    if "свод" in q or "dashboard" in q or "контур" in q:
+        data = build_dashboard(db)
+        return (
+            "Сводка контура: "
+            f"портфель={data['portfolio_rows']}, план={data['planning_rows']}, факт={data['fact_rows']}, "
+            f"труд={data['labor_fact_rows']}, сбыт={data['sales_orders']}, склад={data['warehouse_rows']}, sap={data['sap_orders']}.",
+            data,
+        )
 
     return (
         "Я умею: искать заказ, анализировать план-факт, просрочки и материал. "
