@@ -1,0 +1,2 @@
+fact_period,order_number,customer_order,material_code,material_name,plant,department,work_center,order_qty,delivered_qty,confirmed_qty,fact_qty,fact_hours
+2026-03,102100118179,KO-77,100001,Труба 1420,1420,УМК,WC-01,100,60,58,60,8
