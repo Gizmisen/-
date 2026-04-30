@@ -357,11 +357,25 @@ CREATE TABLE IF NOT EXISTS orders_history_raw_rows (
     file_import_id BIGINT NOT NULL REFERENCES file_imports(id) ON DELETE CASCADE,
     sheet_name VARCHAR(255) NOT NULL,
     row_number INTEGER NOT NULL,
-    raw_data TEXT NOT NULL,
+    raw_data JSONB NOT NULL,
     detected_profile VARCHAR(64),
     parse_status VARCHAR(32),
     error_message TEXT
 );
+
+ALTER TABLE orders_history_raw_rows
+    ALTER COLUMN raw_data TYPE JSONB USING raw_data::jsonb;
+
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS date_registration DATE;
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS date_start_plan DATE;
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS delivery_date DATE;
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS qty_requested NUMERIC(18,6);
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS planned_hours NUMERIC(18,6);
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS fact_hours NUMERIC(18,6);
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS labor_hours NUMERIC(18,6);
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS source_file_id BIGINT;
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
 
 CREATE TABLE IF NOT EXISTS orders_history_sheet_profiles (
     id BIGSERIAL PRIMARY KEY,

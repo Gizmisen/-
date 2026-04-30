@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, Numeric, String, Text, func
+from sqlalchemy import JSON, Date, DateTime, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -150,7 +150,7 @@ class OrdersHistoryRawRow(Base):
     file_import_id: Mapped[int] = mapped_column(nullable=False)
     sheet_name: Mapped[str] = mapped_column(String(255), nullable=False)
     row_number: Mapped[int] = mapped_column(nullable=False)
-    raw_data: Mapped[str] = mapped_column(Text(), nullable=False)
+    raw_data: Mapped[dict] = mapped_column(JSON, nullable=False)
     detected_profile: Mapped[str | None] = mapped_column(String(64))
     parse_status: Mapped[str | None] = mapped_column(String(32))
     error_message: Mapped[str | None] = mapped_column(Text())
