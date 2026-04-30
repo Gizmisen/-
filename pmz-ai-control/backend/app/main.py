@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import Base, engine
 from app.models import imports, materials, orders, production_fact, production_plan, users
-from app.routers import ai, auth, imports as imports_router, plan_fact, ui
+from app.routers import ai, auth, imports as imports_router, plan_fact, templates, ui
 
 
 @asynccontextmanager
@@ -38,3 +38,5 @@ app.include_router(imports_router.router)
 app.include_router(plan_fact.router)
 app.include_router(ai.router)
 app.include_router(ui.router)
+
+app.include_router(templates.router)
