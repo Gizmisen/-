@@ -6,6 +6,7 @@ from app.database import get_db
 from app.models.imports import FileImport
 from app.services.portfolio_import_service import import_portfolio_requests
 from app.services.portfolio_service import create_row, list_rows
+from app.services.portfolio_validation_service import find_duplicates, find_missing_materials
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -42,3 +43,13 @@ def import_portfolio(file_id: int, db: Session = Depends(get_db)):
         return {"error": "file not found"}
     rows = import_portfolio_requests(db, rec)
     return {"status": rec.status, "imported_rows": rows}
+
+
+@router.get("/check-duplicates")
+def check_duplicates(db: Session = Depends(get_db)):
+    return {"items": find_duplicates(db)}
+
+
+@router.get("/missing-materials")
+def missing_materials(db: Session = Depends(get_db)):
+    return {"items": find_missing_materials(db)}

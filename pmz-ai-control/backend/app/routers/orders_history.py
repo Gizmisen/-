@@ -6,6 +6,7 @@ from app.database import get_db
 from app.models.imports import FileImport
 from app.services.orders_history_import_service import import_orders_history
 from app.services.orders_history_service import create_row, list_rows
+from app.services.orders_history_match_service import compare_with_portfolio, find_analogs
 
 router = APIRouter(prefix="/orders-history", tags=["orders-history"])
 
@@ -39,3 +40,13 @@ def import_history(file_id: int, db: Session = Depends(get_db)):
     if not rec:
         return {"error": "file not found"}
     return import_orders_history(db, rec)
+
+
+@router.get("/find-analogs")
+def analogs(material_code: str | None = Query(default=None), plant: str | None = Query(default=None), limit: int = Query(default=100, ge=1, le=1000), db: Session = Depends(get_db)):
+    return {"items": find_analogs(db, material_code=material_code, plant=plant, limit=limit)}
+
+
+@router.get("/compare-with-portfolio")
+def compare_portfolio(limit: int = Query(default=200, ge=1, le=2000), db: Session = Depends(get_db)):
+    return {"items": compare_with_portfolio(db, limit=limit)}
