@@ -354,3 +354,18 @@ CREATE TABLE IF NOT EXISTS orders_history_sheet_profiles (
     mapping_json TEXT,
     is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
+
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS registration_number VARCHAR(64);
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS registration_date DATE;
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS planning_variant VARCHAR(64);
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS order_open_date DATE;
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS unit VARCHAR(32);
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS agreed_qty NUMERIC(18,6);
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS planned_qty NUMERIC(18,6);
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS shipped_qty NUMERIC(18,6);
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS additional_info TEXT;
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS note TEXT;
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS planned_delivery_date DATE;
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS actual_delivery_date DATE;
+ALTER TABLE order_portfolio ADD COLUMN IF NOT EXISTS order_status VARCHAR(64);
