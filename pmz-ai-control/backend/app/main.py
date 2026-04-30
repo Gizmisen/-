@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import Base, engine
 from app.models import imports, materials, orders, production_fact, production_plan, users
-from app.routers import ai, auth, imports as imports_router, plan_fact, templates, ui
+from app.routers import ai, auth, dashboard, fact, imports as imports_router, labor_fact, orders_history, plan_fact, plan_versions, planning, portfolio, production_data, sales, sap, templates, ui, warehouse
 
 
 @asynccontextmanager
@@ -40,3 +40,15 @@ app.include_router(ai.router)
 app.include_router(ui.router)
 
 app.include_router(templates.router)
+
+app.include_router(production_data.router)
+app.include_router(portfolio.router)
+app.include_router(orders_history.router)
+app.include_router(planning.router)
+app.include_router(plan_versions.router)
+app.include_router(fact.router)
+app.include_router(labor_fact.router)
+app.include_router(warehouse.router)
+app.include_router(sales.router)
+app.include_router(sap.router)
+app.include_router(dashboard.router)
