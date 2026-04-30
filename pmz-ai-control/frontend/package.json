@@ -1,0 +1,8 @@
+{
+  "name": "pmz-ai-control-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "echo 'Initialize Next.js app in frontend/ when ready' && sleep infinity"
+  }
+}
