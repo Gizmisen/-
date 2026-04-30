@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.models.orders import Order
 from app.models.production_fact import ProductionFact
 from app.models.production_plan import ProductionPlan
+from app.services.ai_analysis_service import find_fact_without_plan, find_plan_without_fact, find_portfolio_without_plan, find_warehouse_shortages
 from app.services.dashboard_service import build_dashboard
 from app.services.plan_fact_service import build_plan_fact_report
 
@@ -96,6 +97,10 @@ def _tool_schema() -> list[dict]:
         {"type": "function", "function": {"name": "find_material_usage", "description": "Find material usage in plan/fact", "parameters": {"type": "object", "properties": {"material_code": {"type": "string"}}, "required": ["material_code"]}}},
         {"type": "function", "function": {"name": "analyze_plan_fact", "description": "Analyze plan/fact report", "parameters": {"type": "object", "properties": {"period": {"type": "string"}, "status": {"type": "string"}, "limit": {"type": "integer"}}}}},
         {"type": "function", "function": {"name": "get_overdue_items", "description": "Get overdue items", "parameters": {"type": "object", "properties": {"today": {"type": "string"}}}}},
+        {"type": "function", "function": {"name": "find_plan_without_fact", "description": "Find planned rows without fact", "parameters": {"type": "object", "properties": {"period": {"type": "string"}, "limit": {"type": "integer"}}}}},
+        {"type": "function", "function": {"name": "find_fact_without_plan", "description": "Find fact rows without plan", "parameters": {"type": "object", "properties": {"period": {"type": "string"}, "limit": {"type": "integer"}}}}},
+        {"type": "function", "function": {"name": "find_portfolio_without_plan", "description": "Find portfolio rows without plan", "parameters": {"type": "object", "properties": {"limit": {"type": "integer"}}}}},
+        {"type": "function", "function": {"name": "find_warehouse_shortages", "description": "Find warehouse shortages", "parameters": {"type": "object", "properties": {"limit": {"type": "integer"}}}}},
     ]
 
 
@@ -108,6 +113,14 @@ def _execute_tool(db: Session, name: str, arguments: dict):
         return analyze_plan_fact(db, period=arguments.get("period"), status=arguments.get("status"), limit=arguments.get("limit", 50))
     if name == "get_overdue_items":
         return get_overdue_items(db, today=arguments.get("today"))
+    if name == "find_plan_without_fact":
+        return find_plan_without_fact(db, period=arguments.get("period"), limit=arguments.get("limit", 200))
+    if name == "find_fact_without_plan":
+        return find_fact_without_plan(db, period=arguments.get("period"), limit=arguments.get("limit", 200))
+    if name == "find_portfolio_without_plan":
+        return find_portfolio_without_plan(db, limit=arguments.get("limit", 200))
+    if name == "find_warehouse_shortages":
+        return find_warehouse_shortages(db, limit=arguments.get("limit", 200))
     return {"error": f"Unknown tool {name}"}
 
 
