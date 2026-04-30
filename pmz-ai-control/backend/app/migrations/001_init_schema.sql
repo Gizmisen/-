@@ -498,3 +498,21 @@ CREATE TABLE IF NOT EXISTS orders_history_links (
     matched_by VARCHAR(32),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS portfolio_transfers (
+    id BIGSERIAL PRIMARY KEY,
+    transfer_batch_id VARCHAR(64) NOT NULL,
+    source_portfolio_id BIGINT,
+    plant VARCHAR(32),
+    customer_id BIGINT,
+    material_code VARCHAR(64),
+    material_name TEXT,
+    qty NUMERIC(18,6),
+    hours NUMERIC(18,6),
+    delivery_date DATE,
+    transfer_type VARCHAR(16) NOT NULL,
+    planning_variant VARCHAR(128),
+    status VARCHAR(64),
+    created_by VARCHAR(128),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

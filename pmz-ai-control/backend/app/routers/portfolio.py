@@ -9,6 +9,7 @@ from app.models.imports import FileImport
 from app.models.master_data import PortfolioPlanningVariant
 from app.services.portfolio_import_service import import_portfolio_requests
 from app.services.portfolio_batch_service import confirm_batch, preview_batch
+from app.services.portfolio_transfer_service import confirm_transfers, delete_current_transfers, preview_transfers
 from app.services.portfolio_service import count_rows, create_row, get_row, list_rows, update_row
 from app.services.portfolio_validation_service import find_duplicates, find_duplicates_smart, find_missing_materials, find_missing_required_fields
 from app.services.production_data_service import find_material
@@ -151,6 +152,23 @@ def batch_preview(file_id: int, db: Session = Depends(get_db)):
 @router.post("/batch-confirm/{file_id}")
 def batch_confirm(file_id: int, db: Session = Depends(get_db)):
     return confirm_batch(db, file_import_id=file_id)
+
+
+@router.post("/transfers/preview")
+def transfers_preview(db: Session = Depends(get_db)):
+    rows = preview_transfers(db)
+    batch_id = rows[0].transfer_batch_id if rows else None
+    return {"batch_id": batch_id, "items": [{"id": x.id, "transfer_type": x.transfer_type, "plant": x.plant, "material_code": x.material_code, "qty": float(x.qty or 0), "status": x.status} for x in rows]}
+
+
+@router.post("/transfers/confirm")
+def transfers_confirm(batch_id: str, db: Session = Depends(get_db)):
+    return {"batch_id": batch_id, "count": confirm_transfers(db, batch_id=batch_id)}
+
+
+@router.delete("/transfers/current")
+def transfers_delete_current(db: Session = Depends(get_db)):
+    return {"deleted": delete_current_transfers(db)}
 
 
 @router.get("/check-duplicates")

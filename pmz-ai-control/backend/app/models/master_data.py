@@ -107,3 +107,22 @@ class OrdersHistoryLink(Base):
     match_score: Mapped[float | None] = mapped_column(Numeric(5, 2))
     matched_by: Mapped[str | None] = mapped_column(String(32))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class PortfolioTransfer(Base):
+    __tablename__ = "portfolio_transfers"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    transfer_batch_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_portfolio_id: Mapped[int | None] = mapped_column(nullable=True)
+    plant: Mapped[str | None] = mapped_column(String(32))
+    customer_id: Mapped[int | None] = mapped_column(nullable=True)
+    material_code: Mapped[str | None] = mapped_column(String(64))
+    material_name: Mapped[str | None] = mapped_column(Text())
+    qty: Mapped[float | None] = mapped_column(Numeric(18, 6))
+    hours: Mapped[float | None] = mapped_column(Numeric(18, 6))
+    delivery_date: Mapped[date | None] = mapped_column(Date)
+    transfer_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    planning_variant: Mapped[str | None] = mapped_column(String(128))
+    status: Mapped[str | None] = mapped_column(String(64))
+    created_by: Mapped[str | None] = mapped_column(String(128))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
