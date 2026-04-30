@@ -1,4 +1,7 @@
-"""Service layer for production_data module.
+from sqlalchemy.orm import Session
 
-TODO: implement domain logic based on expanded PMZ production contour spec.
-"""
+from app.models.materials import Material
+
+
+def get_summary(db: Session) -> dict:
+    return {"materials": db.query(Material).count()}
