@@ -322,3 +322,35 @@ CREATE TABLE routing_operations (
     labor_value NUMERIC(18,6),
     labor_unit VARCHAR(16)
 );
+
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS source_sheet VARCHAR(128);
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS source_row_number INTEGER;
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS year INTEGER;
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS month INTEGER;
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS plant VARCHAR(32);
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS material_code VARCHAR(64);
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS material_name TEXT;
+ALTER TABLE orders_history ADD COLUMN IF NOT EXISTS qty NUMERIC(18,6);
+
+CREATE TABLE IF NOT EXISTS orders_history_raw_rows (
+    id BIGSERIAL PRIMARY KEY,
+    file_import_id BIGINT NOT NULL REFERENCES file_imports(id) ON DELETE CASCADE,
+    sheet_name VARCHAR(255) NOT NULL,
+    row_number INTEGER NOT NULL,
+    raw_data TEXT NOT NULL,
+    detected_profile VARCHAR(64),
+    parse_status VARCHAR(32),
+    error_message TEXT
+);
+
+CREATE TABLE IF NOT EXISTS orders_history_sheet_profiles (
+    id BIGSERIAL PRIMARY KEY,
+    profile_name VARCHAR(128) NOT NULL,
+    sheet_name_pattern VARCHAR(255) NOT NULL,
+    profile_type VARCHAR(64) NOT NULL,
+    header_row INTEGER,
+    data_start_row INTEGER,
+    mapping_json TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);

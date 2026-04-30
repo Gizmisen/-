@@ -19,6 +19,15 @@ class OrderPortfolio(Base):
 class OrdersHistory(Base):
     __tablename__ = "orders_history"
     id: Mapped[int] = mapped_column(primary_key=True)
+    source_sheet: Mapped[str | None] = mapped_column(String(128))
+    source_row_number: Mapped[int | None] = mapped_column()
+    year: Mapped[int | None] = mapped_column()
+    month: Mapped[int | None] = mapped_column()
+    plant: Mapped[str | None] = mapped_column(String(32))
+    customer_name: Mapped[str | None] = mapped_column(String(255))
+    material_code: Mapped[str | None] = mapped_column(String(64))
+    material_name: Mapped[str | None] = mapped_column(Text())
+    qty: Mapped[float | None] = mapped_column(Numeric(18, 6))
     order_number: Mapped[str] = mapped_column(String(64), nullable=False)
     status: Mapped[str | None] = mapped_column(String(64))
     event_date: Mapped[str | None] = mapped_column(Date)
@@ -97,3 +106,28 @@ class RoutingOperation(Base):
     work_center: Mapped[str] = mapped_column(String(64), nullable=False)
     labor_value: Mapped[float | None] = mapped_column(Numeric(18, 6))
     labor_unit: Mapped[str | None] = mapped_column(String(16))
+
+
+
+class OrdersHistoryRawRow(Base):
+    __tablename__ = "orders_history_raw_rows"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    file_import_id: Mapped[int] = mapped_column(nullable=False)
+    sheet_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    row_number: Mapped[int] = mapped_column(nullable=False)
+    raw_data: Mapped[str] = mapped_column(Text(), nullable=False)
+    detected_profile: Mapped[str | None] = mapped_column(String(64))
+    parse_status: Mapped[str | None] = mapped_column(String(32))
+    error_message: Mapped[str | None] = mapped_column(Text())
+
+
+class OrdersHistorySheetProfile(Base):
+    __tablename__ = "orders_history_sheet_profiles"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    profile_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    sheet_name_pattern: Mapped[str] = mapped_column(String(255), nullable=False)
+    profile_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    header_row: Mapped[int | None] = mapped_column()
+    data_start_row: Mapped[int | None] = mapped_column()
+    mapping_json: Mapped[str | None] = mapped_column(Text())
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
