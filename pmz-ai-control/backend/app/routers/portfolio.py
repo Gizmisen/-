@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models.imports import FileImport
+from app.services.portfolio_import_service import import_portfolio_requests
 from app.services.portfolio_service import create_row, list_rows
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
@@ -31,3 +33,12 @@ def rows(limit: int = Query(default=100, ge=1, le=1000), db: Session = Depends(g
 def add_row(payload: PortfolioCreate, db: Session = Depends(get_db)):
     x = create_row(db, period=payload.period, order_number=payload.order_number, material_code=payload.material_code, plant=payload.plant, qty=payload.qty)
     return {"id": x.id}
+
+
+@router.post("/import/{file_id}")
+def import_portfolio(file_id: int, db: Session = Depends(get_db)):
+    rec = db.query(FileImport).filter(FileImport.id == file_id).first()
+    if not rec:
+        return {"error": "file not found"}
+    rows = import_portfolio_requests(db, rec)
+    return {"status": rec.status, "imported_rows": rows}

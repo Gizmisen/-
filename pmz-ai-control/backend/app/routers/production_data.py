@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models.imports import FileImport
+from app.services.production_data_import_service import import_master_data
 from app.services.production_data_service import (
     create_material,
     create_routing,
@@ -83,3 +85,12 @@ def routings(limit: int = Query(default=100, ge=1, le=1000), db: Session = Depen
 def add_routing(payload: RoutingCreate, db: Session = Depends(get_db)):
     x = create_routing(db, material_code=payload.material_code, plant=payload.plant, work_center=payload.work_center, labor_value=payload.labor_value, labor_unit=payload.labor_unit)
     return {"id": x.id}
+
+
+@router.post("/import-master/{file_id}")
+def import_master(file_id: int, db: Session = Depends(get_db)):
+    rec = db.query(FileImport).filter(FileImport.id == file_id).first()
+    if not rec:
+        return {"error": "file not found"}
+    result = import_master_data(db, rec)
+    return {"status": rec.status, "imported": result}
